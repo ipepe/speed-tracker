@@ -1,21 +1,23 @@
 
 import * as Location from 'expo-location';
-import React, { useEffect, useState, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function App() {
-  const [location, setLocation] = useState(null);
-  const [speed, setSpeed] = useState(0);
-  const [maxSpeed, setMaxSpeed] = useState(0);
-  const [averageSpeed, setAverageSpeed] = useState(0);
-  const [isTracking, setIsTracking] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [speed, setSpeed] = useState<number>(0);
+  const [maxSpeed, setMaxSpeed] = useState<number>(0);
+  const [averageSpeed, setAverageSpeed] = useState<number>(0);
+  const [isTracking, setIsTracking] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Use refs to store running totals to avoid re-renders on every update
-  const totalSpeed = useRef(0);
-  const sampleCount = useRef(0);
+  const totalSpeed = useRef<number>(0);
+  const sampleCount = useRef<number>(0);
 
   useEffect(() => {
+    let locationSubscription: Location.LocationSubscription | null = null;
+
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -23,7 +25,7 @@ export default function App() {
         return;
       }
 
-      const locationSubscription = await Location.watchPositionAsync(
+      locationSubscription = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.High,
           distanceInterval: 1,
@@ -48,11 +50,13 @@ export default function App() {
           }
         }
       );
-
-      return () => {
-        locationSubscription.remove();
-      };
     })();
+
+    return () => {
+      if (locationSubscription) {
+        locationSubscription.remove();
+      }
+    };
   }, [isTracking, maxSpeed]); // Simplified dependencies
 
   const handleToggleTracking = () => {
